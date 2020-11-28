@@ -1,0 +1,39 @@
+body {
+  margin: 0;
+  min-width: 250px;
+  justify-items: center;
+  align-items: center;
+}
+
+/* Include the padding and border in an element's total width and height */
+* {
+  box-sizing: border-box;
+}
+
+/* Remove margins and padding from the list */
+ul.stuff {
+  margin: 50px;
+  padding: 0;
+  justify-items: center;
+  align-items: center;
+}
+
+/* Style the list items */
+ul.stuff li {
+  cursor: pointer;
+  position: relative;
+  justify-items: center;
+  align-items: center;
+  padding: 12px 8px 12px 40px;
+  list-style-type: none;
+  background: #aed4f7;
+  font-size: 18px;
+  transition: 0.2s;
+  margin: 25px;
+  
+  /* make the list items unselectable */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

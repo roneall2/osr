@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optical Spending Recognition</title>
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/index.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/form.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="./static/css/w3.css">
+</head>
+
+<body>
+    <ul class="topnav">
+        <li><a href="./home">Home</a></li>
+        <li><a href="./budget">Budget</a></li>
+        <li><a href="./receipt">Receipt</a></li>
+        <li><a href="./items">Items</a></li>
+        <li><a href="./delete">Delete</a></li>
+        <li><a href="./update">Update</a></li>
+        <li><a class="active" href="./stats">Stats</a></li>
+    </ul>
+
+    <ul id="myUL" class="stuff">
+        <h1>Items Per Receipt:</h1>
+        {% for item in receipt %}
+            <li>Receipt ID: {{ item[0] }}, Number of Items: {{ item[1] }}</li>
+        {% endfor %}
+
+        <h1>Items Per Brand Per Store:</h1>
+        {% for item in brand %}
+            <li> Brand: {{ item[0] }}, Store: {{ item[1] }}, Number of Items: {{ item[2] }} </li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
