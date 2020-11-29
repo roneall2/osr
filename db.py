@@ -26,7 +26,7 @@ def initialize():
     mycursor.execute("DROP TABLE IF EXISTS User")
     mycursor.execute("CREATE TABLE User (UserID INT, budget REAL, name VARCHAR(255), password VARCHAR(255), PRIMARY KEY (UserID))")
     mycursor.execute("CREATE TABLE Store(StoreID INT, name VARCHAR(255), location VARCHAR(255), category VARCHAR(255), PRIMARY KEY (StoreID))")
-    mycursor.execute("CREATE TABLE Receipt(PurchaseID INT, UserID INT, StoreID INT, subtotal float, total float, PRIMARY KEY (PurchaseID), FOREIGN KEY (UserID) REFERENCES User (UserID), FOREIGN KEY (StoreID) REFERENCES Store (StoreID))")
+    mycursor.execute("CREATE TABLE Receipt(PurchaseID INT, UserID INT, StoreID INT, subtotal float, total float, PRIMARY KEY (PurchaseID), FOREIGN KEY (UserID) REFERENCES User (UserID) ON DELETE CASCADE, FOREIGN KEY (StoreID) REFERENCES Store (StoreID) ON DELETE CASCADE)")
     mycursor.execute("CREATE TABLE Item(ItemID INT, PurchaseID INT, brand VARCHAR(255), name VARCHAR(255), price float, PRIMARY KEY (ItemID), FOREIGN KEY (PurchaseID) REFERENCES Receipt (PurchaseID) ON DELETE CASCADE)")
     
 
@@ -104,26 +104,11 @@ def add_receipt(user_id, store_id, subtotal, total):
     mycursor.execute(sql, val)
     mydb.commit()
 
+# delete a receipt from the database
 def delete_receipt(purchase_id):
     global mydb, mycursor
     sql = "DELETE FROM Receipt WHERE PurchaseID = %s"
     val = (purchase_id,)
-    mycursor.execute(sql, val)
-    mydb.commit()
-    
-# adds an item to the database
-def add_item(purchase_id, brand, name, price):
-    global mydb, mycursor, last_item
-    mycursor.execute("SELECT ItemID FROM Item WHERE Item.brand = %s AND Item.name = %s", (brand, name))
-    result = mycursor.fetchone()
-    item_id = 0
-    if result:
-        item_id = result
-    else:
-        last_item += 1
-        item_id = last_item
-    sql = "INSERT INTO Item(ItemID, PurchaseID, brand, name, price) VALUES (%s, %s, %s, %s, %s)"
-    val = (item_id, purchase_id, brand, name, price)
     mycursor.execute(sql, val)
     mydb.commit()
 
@@ -144,7 +129,31 @@ def check_store(name, location, category):
     mydb.commit()
     return store_id
 
-#deletes a item and all the items related to that reciept
+# delete a store
+def delete_store(store_id):
+    global mydb, mycursor
+    sql = "DELETE FROM Store WHERE StoreID = %s"
+    val = (store_id,)
+    mycursor.execute(sql, val)
+    mydb.commit()
+
+# adds an item to the database
+def add_item(purchase_id, brand, name, price):
+    global mydb, mycursor, last_item
+    mycursor.execute("SELECT ItemID FROM Item WHERE Item.brand = %s AND Item.name = %s", (brand, name))
+    result = mycursor.fetchone()
+    item_id = 0
+    if result:
+        item_id = result
+    else:
+        last_item += 1
+        item_id = last_item
+    sql = "INSERT INTO Item(ItemID, PurchaseID, brand, name, price) VALUES (%s, %s, %s, %s, %s)"
+    val = (item_id, purchase_id, brand, name, price)
+    mycursor.execute(sql, val)
+    mydb.commit()
+
+# deletes a item and all the items related to that reciept
 def delete_item(item_id):
     global mycursor, mydb
     sql = "DELETE FROM Item WHERE ItemId = %s"
@@ -152,11 +161,29 @@ def delete_item(item_id):
     mycursor.execute(sql, val)
     mydb.commit()
     
-#updates an item in the database
+# updates an item in the database
 def update_item(ItemID, brand, name, price):
     global mydb, mycursor
     sql = "UPDATE Item SET brand = %s, name = %s, price = %s WHERE Item.ItemID = %s"
     val = (brand, name, price, ItemID)
+    mycursor.execute(sql, val)
+    mydb.commit()
+
+# add user to the database
+def add_user(name, password, budget):
+    global mydb, mycursor, last_user
+    last_user += 1
+    user_id = last_user
+    sql = "INSERT INTO User(UserID, budget, name, password) VALUES (%s, %s, %s, %s)"
+    val = (user_id, budget, name, password)
+    mycursor.execute(sql, val)
+    mydb.commit()
+
+# deletes user from the database
+def delete_user(UserID):
+    global mydb, mycursor
+    sql = "DELETE FROM User WHERE UserID = %s"
+    val = (UserID,)
     mycursor.execute(sql, val)
     mydb.commit()
 
