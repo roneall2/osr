@@ -24,14 +24,14 @@ def initialize():
     mycursor.execute("DROP TABLE IF EXISTS Receipt")
     mycursor.execute("DROP TABLE IF EXISTS Store")
     mycursor.execute("DROP TABLE IF EXISTS User")
-    mycursor.execute("CREATE TABLE User (UserID INT, Budget INT, name VARCHAR(255), password VARCHAR(255), PRIMARY KEY (UserID))")
+    mycursor.execute("CREATE TABLE User (UserID INT, budget REAL, name VARCHAR(255), password VARCHAR(255), PRIMARY KEY (UserID))")
     mycursor.execute("CREATE TABLE Store(StoreID INT, name VARCHAR(255), location VARCHAR(255), category VARCHAR(255), PRIMARY KEY (StoreID))")
-    mycursor.execute("CREATE TABLE Receipt(PurchaseID INT, UserID INT, StoreID INT, subtotal float, total float, PRIMARY KEY (PurchaseID), FOREIGN KEY (UserID) REFERENCES User (UserID) ON DELETE CASCADE, FOREIGN KEY (StoreID) REFERENCES Store (StoreID) ON DELETE CASCADE)")
-    mycursor.execute("CREATE TABLE Item(ItemID INT, PurchaseID INT, brand VARCHAR(255), name VARCHAR(255), price float, PRIMARY KEY (ItemID), FOREIGN KEY (PurchaseID) REFERENCES Receipt (PurchaseID))")
+    mycursor.execute("CREATE TABLE Receipt(PurchaseID INT, UserID INT, StoreID INT, subtotal float, total float, PRIMARY KEY (PurchaseID), FOREIGN KEY (UserID) REFERENCES User (UserID), FOREIGN KEY (StoreID) REFERENCES Store (StoreID))")
+    mycursor.execute("CREATE TABLE Item(ItemID INT, PurchaseID INT, brand VARCHAR(255), name VARCHAR(255), price float, PRIMARY KEY (ItemID), FOREIGN KEY (PurchaseID) REFERENCES Receipt (PurchaseID) ON DELETE CASCADE)")
     
 
     # initialize demo user
-    sql = "INSERT INTO User(UserID, Budget, name, password) VALUES (%s, %s, %s, %s)"
+    sql = "INSERT INTO User(UserID, budget, name, password) VALUES (%s, %s, %s, %s)"
     val = (0, 10000, "John Smith", "password")
     mycursor.execute(sql, val)
 
@@ -64,9 +64,9 @@ def initialize():
         (3, 1, "Apple", "iPhone", 1800.00)
     ]
     mycursor.executemany(sql, val)
-    last_item = 3
-    last_receipt = 1
-    last_store = 1
+    last_item += 3
+    last_receipt += 1
+    last_store += 1
 
     mydb.commit()
 
@@ -101,6 +101,13 @@ def add_receipt(user_id, store_id, subtotal, total):
     sql = "INSERT INTO Receipt(PurchaseID, UserID, StoreID, subtotal, total) VALUES (%s, %s, %s, %s, %s)"
     last_receipt += 1
     val = (last_receipt, user_id, store_id, subtotal, total)
+    mycursor.execute(sql, val)
+    mydb.commit()
+
+def delete_receipt(purchase_id):
+    global mydb, mycursor
+    sql = "DELETE FROM Receipt WHERE PurchaseID = %s"
+    val = (purchase_id,)
     mycursor.execute(sql, val)
     mydb.commit()
     
@@ -152,6 +159,15 @@ def update_item(ItemID, brand, name, price):
     val = (brand, name, price, ItemID)
     mycursor.execute(sql, val)
     mydb.commit()
+
+def get_all_user_info(UserID):
+    global mydb, mycursor
+    # if this doesn't work, swap receipt and item in the join
+    sql = "SELECT * FROM (Receipt NATURAL JOIN Store) AS R LEFT OUTER JOIN Item ON R.PurchaseID = Item.PurchaseID WHERE R.UserID = %s"
+    val = (UserID,)
+    sql2 = "SELECT * FROM User WHERE User.UserID = %s"
+    val2 = (UserID,)
+    return mycursor.execute(sql, val), mycursor.execute(sql2, val2)
 
 # def get_spend(user_id):
 #     global mycursor
