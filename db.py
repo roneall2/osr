@@ -196,10 +196,5 @@ def get_all_user_info(UserID):
     val2 = (UserID,)
     return mycursor.execute(sql, val), mycursor.execute(sql2, val2)
 
-# def get_spend(user_id):
-#     global mycursor
-#     mycursor.execute("SELECT * FROM Receipt LEFT OUTER JOIN Item ON Item.PurchaseID = Receipt.PurchaseID WHERE Receipt.UserID = %s GROUP BY ", query)
-#     return mycursor.fetchall()
-
 if __name__ == "__main__":
     print('hi')
