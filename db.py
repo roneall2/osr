@@ -94,7 +94,7 @@ def find_items(user_id, item_name):
     mycursor.execute("SELECT * FROM Receipt LEFT OUTER JOIN Item ON Item.PurchaseID = Receipt.PurchaseID WHERE Receipt.UserID = %s AND Item.name = %s", (user_id, item_name))
     return mycursor.fetchall()
     
-# adds a receipt to the database
+# adds a receipt to the database, returns its purchase id
 # store_id should be the return value of check_store
 def add_receipt(user_id, store_id, subtotal, total):
     global mydb, mycursor, last_receipt
@@ -103,6 +103,7 @@ def add_receipt(user_id, store_id, subtotal, total):
     val = (last_receipt, user_id, store_id, subtotal, total)
     mycursor.execute(sql, val)
     mydb.commit()
+    return last_receipt
 
 # delete a receipt from the database
 def delete_receipt(purchase_id):
@@ -113,6 +114,7 @@ def delete_receipt(purchase_id):
     mydb.commit()
 
 # returns store_id
+# checks if a store exists and returns its store id; if it doesn't exist, instead adds it to the database
 def check_store(name, location, category):
     global mydb, mycursor, last_store
     mycursor.execute("SELECT StoreID FROM Store WHERE Store.name = %s AND Store.location = %s", (name, location))
@@ -136,7 +138,7 @@ def delete_store(store_id):
     mycursor.execute(sql, val)
     mydb.commit()
 
-# adds an item to the database
+# adds an item to the database, returns its item id
 def add_item(purchase_id, brand, name, price):
     global mydb, mycursor, last_item
     mycursor.execute("SELECT ItemID FROM Item WHERE Item.brand = %s AND Item.name = %s", (brand, name))
@@ -151,6 +153,7 @@ def add_item(purchase_id, brand, name, price):
     val = (item_id, purchase_id, brand, name, price)
     mycursor.execute(sql, val)
     mydb.commit()
+    return item_id
 
 # deletes a item and all the items related to that reciept
 def delete_item(item_id):
