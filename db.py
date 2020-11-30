@@ -117,17 +117,16 @@ def check_store(name, location, category):
     global mydb, mycursor, last_store
     mycursor.execute("SELECT StoreID FROM Store WHERE Store.name = %s AND Store.location = %s", (name, location))
     result = mycursor.fetchone()
-    store_id = 0
     if result:
-        return store_id
+        return result[0]
     else:
         last_store += 1
         store_id = last_store
-    sql = "INSERT INTO Store (StoreID, name, location, category) VALUES (%s, %s, %s, %s)"
-    val = (store_id, name, location, category)
-    mycursor.execute(sql, val)
-    mydb.commit()
-    return store_id
+        sql = "INSERT INTO Store (StoreID, name, location, category) VALUES (%s, %s, %s, %s)"
+        val = (store_id, name, location, category)
+        mycursor.execute(sql, val)
+        mydb.commit()
+        return store_id
 
 # delete a store
 def delete_store(store_id):
