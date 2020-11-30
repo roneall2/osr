@@ -6,11 +6,20 @@
 
 import pymongo
 from db import get_all_user_info
+from bson.code import Code
 
 myclient = None
 mydb = None
 local_client = 'mongodb://localhost:27017/'
 db_name = 'user_data'
+
+
+def get_number_categories(user_id):
+    update_user(user_id)
+    col = mydb[user_id]
+    map = Code("function () {this.category.forEach(function(z) {emit(z, 1);});}")
+    reduce = Code("function (key, values) {var total = 0;for (var i = 0; i < values.length; i++) {total += values[i];}return total;}")
+    return col.map_reduce(map, reduce, "myresults")
 
 # Returns combined aggregate values across all recipts by category
 def get_category_spend(user_id):
