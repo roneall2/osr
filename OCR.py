@@ -127,7 +127,7 @@ def outputToSql(product_catalog):
     purchase_id = db.add_receipt(0, store_id, product_catalog["SUBTOTAL"], product_catalog["TOTAL"])
 
     for name, price in product_catalog.items():
-        if name != "SUBTOTAL" or name != "location" or name != "TOTAL" or name != "store_name":
+        if name != "SUBTOTAL" and name != "location" and name != "TOTAL" and name != "store_name":
             db.add_item(purchase_id, name, name, price)
 
 
