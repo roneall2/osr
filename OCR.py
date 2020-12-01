@@ -3,10 +3,12 @@ import re
 from collections import defaultdict
 
 import pytesseract
+
 from PIL import Image
 import cv2
 from cv2 import cv2
 import numpy as np
+from collections import defaultdict
 
 import db
 
@@ -26,8 +28,9 @@ def image2Text():
     print(recieptTxt)
     print(splitText)
 
-    product_catalog={}
+    product_catalog=defaultdict(int)
     product_catalog=image2Data(splitText,product_catalog)
+    outputToSql(product_catalog)
     print(product_catalog)
     #printImage(image)
 
@@ -54,6 +57,7 @@ def directory2Text():
             print(splitText)
 
             product_catalog = image2Data(splitText,product_catalog)
+            outputToSql(product_catalog)
             print(product_catalog)
             #printImage(image)
         else:
@@ -87,7 +91,6 @@ def preProcess(image):
 
 
 
-
 def image2Data(splitText, product_catalog):
     #Item: Brand, Name, Price
     ##Read and Output text
@@ -105,19 +108,22 @@ def image2Data(splitText, product_catalog):
 
     for line in splitText:
         if re.search(date_pattern,line):
-            items.append(line)
-            product_line = productPattern.search(line)
-            print("first loop",product_line)
+              items.append(line)
+              product_line = productPattern.search(line)
+              print("first loop",product_line)
+          # elif re.match(price_pattern, line):
+          #    date= line
         elif re.search(product_pattern, line):
-            product_line=product_pattern.search(line)
-            print("second loop",product_line.group(1))
-            products.append(product_line.group(1))
-            prices.append(product_line.group(2))
-            product_catalog[product_line.group(1)]=product_line.group(2)
+          product_line=product_pattern.search(line)
+          print("second loop",product_line.group(1))
+          products.append(product_line.group(1))
+          prices.append(product_line.group(2))
+          product_catalog[product_line.group(1)]=product_line.group(2)
         elif re.search(total_pattern, line):
-            print("subtotal and total",line)
-            total_line = total_pattern.search(line)
-            product_catalog[total_line.group(1)]=total_line.group(2)
+          print("subtotal and total",line)
+          total_line = total_pattern.search(line)
+          product_catalog[total_line.group(1)]=0
+          product_catalog[total_line.group(1)]=total_line.group(2)
         elif re.search(store_pattern, line):
             print("store name", line)
             store_line = store_pattern.search(line)
@@ -125,15 +131,18 @@ def image2Data(splitText, product_catalog):
         elif re.search(address_pattern, line):
             print("store name", line)
             address_line = address_pattern.search(line)
-            product_catalog["store_location"] = store_line
-
+            product_catalog["store_location"] = address_line
     print("date:", items)
     print("product names:", products)
     print("prices:", prices)
-    #print(product_catalog)
     return product_catalog
-    #print(items)
 
+def outputToSql(product_catalog):
+    store_id = check_store(product_catalog["store_name"], product_catalog["location"], "")
+    purchase_id=add_receipt(0, store_id, product_catalog["SUBTOTAL"], product_catalog["TOTAL"])
+    for name in product_catalog:
+        price = product_catalog[name]
+        add_item(purchase_id, "brand name", name, price)
 
 def printImage(image):
     d = pytesseract.image_to_data(image, output_type=Output.DICT)
@@ -152,6 +161,7 @@ def printImage(image):
     cv2.imshow('img', image)
     cv2.waitKey(0)
 
+
     #get boxes
     n_boxes = len(d['text'])
     for i in range(n_boxes):
@@ -168,8 +178,4 @@ def printImage(image):
 if __name__ == '__main__':
     image2Text()
     #directory2Text()
-
-
-
-
 
