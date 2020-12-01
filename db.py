@@ -18,17 +18,22 @@ def initialize():
         password="", 
         database='OSRdb'
     )
-    mycursor = mydb.cursor()
+    mycursor = mydb.cursor(buffered=True)
     
     mycursor.execute("DROP TABLE IF EXISTS Item")
     mycursor.execute("DROP TABLE IF EXISTS Receipt")
     mycursor.execute("DROP TABLE IF EXISTS Store")
     mycursor.execute("DROP TABLE IF EXISTS User")
-    mycursor.execute("CREATE TABLE User (UserID INT, budget REAL, name VARCHAR(255), password VARCHAR(255), PRIMARY KEY (UserID))")
+    mycursor.execute("CREATE TABLE User (UserID INT, budget float, name VARCHAR(255), password VARCHAR(255), PRIMARY KEY (UserID))")
     mycursor.execute("CREATE TABLE Store(StoreID INT, name VARCHAR(255), location VARCHAR(255), category VARCHAR(255), PRIMARY KEY (StoreID))")
     mycursor.execute("CREATE TABLE Receipt(PurchaseID INT, UserID INT, StoreID INT, subtotal float, total float, PRIMARY KEY (PurchaseID), FOREIGN KEY (UserID) REFERENCES User (UserID) ON DELETE CASCADE, FOREIGN KEY (StoreID) REFERENCES Store (StoreID) ON DELETE CASCADE)")
     mycursor.execute("CREATE TABLE Item(ItemID INT, PurchaseID INT, brand VARCHAR(255), name VARCHAR(255), price float, PRIMARY KEY (ItemID), FOREIGN KEY (PurchaseID) REFERENCES Receipt (PurchaseID) ON DELETE CASCADE)")
-    
+
+    # set up triggers
+    mycursor.execute("CREATE TRIGGER ReceiptTrig Before INSERT ON Receipt FOR EACH ROW BEGIN IF new.subtotal < 0 THEN SET new.subtotal = 0; END IF; IF new.total < 0 THEN SET new.total = 0; END IF; END;")
+    mycursor.execute("CREATE TRIGGER StoreTrig Before INSERT ON Store FOR EACH ROW BEGIN IF new.name = \"\" THEN SET new.name = \"Unknown\"; END IF; IF new.location = \"\" THEN SET new.location = \"Unknown\"; END IF; IF new.category = \"\" THEN SET new.category = \"Unknown\"; END IF; END;")
+    mycursor.execute("CREATE TRIGGER ItemTrig Before INSERT ON Item FOR EACH ROW BEGIN IF new.name = \"\" THEN SET new.name = \"Unknown\"; END IF; IF new.brand = \"\" THEN SET new.brand = \"Unknown\"; END IF; IF new.price < 0 THEN SET new.price = 0; END IF; END;")
+    mycursor.execute("CREATE TRIGGER UserTrig Before INSERT ON User FOR EACH ROW BEGIN IF new.budget < 0 THEN SET new.budget = 0; END IF; END;")
 
     # initialize demo user
     sql = "INSERT INTO User(UserID, budget, name, password) VALUES (%s, %s, %s, %s)"
@@ -64,6 +69,10 @@ def initialize():
         (3, 1, "Apple", "iPhone", 1800.00)
     ]
     mycursor.executemany(sql, val)
+    last_user = 0
+    last_item = 0
+    last_receipt = 0
+    last_store = 0
     last_item += 3
     last_receipt += 1
     last_store += 1
@@ -141,6 +150,10 @@ def delete_store(store_id):
 # adds an item to the database, returns its item id
 def add_item(purchase_id, brand, name, price):
     global mydb, mycursor, last_item
+    # if name == '':
+    #     name = 'null'
+    # if price == '':
+    #     price = 'null'
     mycursor.execute("SELECT ItemID FROM Item WHERE Item.brand = %s AND Item.name = %s", (brand, name))
     result = mycursor.fetchone()
     item_id = 0
@@ -190,13 +203,22 @@ def delete_user(UserID):
     mydb.commit()
 
 def get_all_user_info(UserID):
-    global mydb, mycursor
+    global mydb, mycursorc
     # if this doesn't work, swap receipt and item in the join
-    sql = "SELECT * FROM (Receipt NATURAL JOIN Store) AS R LEFT OUTER JOIN Item ON R.PurchaseID = Item.PurchaseID WHERE R.UserID = %s"
+    sql = "SELECT * FROM Receipt NATURAL JOIN Store LEFT OUTER JOIN Item ON Receipt.PurchaseID = Item.PurchaseID WHERE Receipt.UserID = %s"
     val = (UserID,)
     sql2 = "SELECT * FROM User WHERE User.UserID = %s"
     val2 = (UserID,)
-    return mycursor.execute(sql, val), mycursor.execute(sql2, val2)
+    mycursor.execute(sql, val)
+    returned = [mycursor.fetchall()]
+    mycursor.execute(sql2, val2)
+    returned.append(mycursor.fetchall())
+    return returned
+
+def get_store_name(StoreID):
+    sql = "SELECT name FROM Store WHERE Store.StoreID = %s"
+    mycursor.execute(sql, (StoreID,))
+    return mycursor.fetchone()[0]
 
 if __name__ == "__main__":
     print('hi')
