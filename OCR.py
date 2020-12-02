@@ -15,13 +15,15 @@ import db as db
 #open cv accepts BGR, while pytesseract accepts RBG
 from pytesseract import Output
 
-def image2Text():
-#file_path
+def image2Text(image_path, userID):
+    #file_path
     # pytesseract.pytesseract.tesseract_cmd= r"C:\Program Files\Tesseract-OCR\tesseract.exe"
     config = r"--oem 3 --psm 6"
-
+    print(image_path)
     #load image
-    image= cv2.imread("realWalmart4.jpg")
+    image= cv2.imread(image_path)
+    #image= cv2.imread("walmartScannedbetter.png")
+
     image = preProcess(image)
     recieptTxt = pytesseract.image_to_string(image, config=config)
     splitText = recieptTxt.splitlines()
@@ -31,7 +33,9 @@ def image2Text():
 
     product_catalog=defaultdict(int)
     product_catalog=image2Data(splitText,product_catalog)
-    outputToSql(product_catalog)
+    #print(product_catalog)
+    outputToSql(product_catalog, userID)
+
     
 
 #This function converts all the images in the directory 
@@ -41,11 +45,12 @@ def directory2Text():
     # pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
     config = r"--oem 3 --psm 6"
     
-    path=os.getcwd()
+    path="photos"
+    i=0
     # iterate through the names of contents of the folder
     for image_path in os.listdir(path):
         if image_path.endswith(".jpg") or image_path.endswith(".png"):
-            product_catalog={}
+            product_catalog=defaultdict(int)
             inventory_list.append(product_catalog)
             # create the full input path and read the file
             input_path = os.path.join(path, image_path)
@@ -59,16 +64,25 @@ def directory2Text():
             #print(splitText)
 
             product_catalog = image2Data(splitText,product_catalog)
-            print(product_catalog)
-            outputToSql(product_catalog)
-            
+            #print(product_catalog)
+            i+=1
+            outputToSqldir(product_catalog, i%9)
             #printImage(image)
-        else:
-            continue
-    print("number of records", len(inventory_list))
+    print("number of records added", len(inventory_list))
 
 
 
+
+
+
+
+
+
+
+
+#These are helper functions
+
+#Function to preproccess the image
 def preProcess(image):
     image = cv2.resize(image, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_CUBIC)
 
@@ -92,13 +106,14 @@ def preProcess(image):
     return image
 
 
-
+#Function that parses through the text and 
+#returns a dictionary with all the purchase items
 def image2Data(splitText, product_catalog):
     #Parsing Patterns
     product_pattern=re.compile(r'([A-Z\s_.]+)[\d\s]+..?\s?\${0,1}(\d+\.\d{2})')
     total_pattern=re.compile(r'(SUBTOTAL|TOTAL)([/s0-9])*', re.IGNORECASE)
-    store_pattern=re.compile(r'(WALMAR|TARGET|COSTCO|SAM\'S)', re.IGNORECASE)
-    address_pattern=re.compile(r'.+(\d{4}\s\w+)$', re.IGNORECASE)
+    store_pattern = re.compile(r'(WALMART|TARGET|COSTCO)', re.IGNORECASE)
+    address_pattern=re.compile(r'.+(\d{4}\s[A-Z-a-z]+)$', re.IGNORECASE)
 
 
     for line in splitText:
@@ -110,7 +125,6 @@ def image2Data(splitText, product_catalog):
         elif re.search(total_pattern, line):
             #print("subtotal and total",line)
             total_line = total_pattern.search(line)
-            product_catalog[total_line.group(1)]=0
             product_catalog[total_line.group(1)]=total_line.group(2)
         #Searches for Store Name
         elif re.search(store_pattern, line):
@@ -124,15 +138,40 @@ def image2Data(splitText, product_catalog):
             product_catalog["store_location"] = address_line.group(1)
     return product_catalog
 
-def outputToSql(product_catalog):
-    store_id = db.check_store(product_catalog["store_name"].lstrip(), product_catalog["location"], "")
-    purchase_id= db.add_receipt(0, store_id, product_catalog["SUBTOTAL"], product_catalog["TOTAL"])
-    
+#Inputs purchased data into database for a SINGLE photo
+def outputToSql(product_catalog, userID):
+    store_id = db.check_store(str(product_catalog["store_name"]).lstrip(), product_catalog["store_location"], "")
+    purchase_id= db.add_receipt(userID , store_id, product_catalog["SUBTOTAL"], product_catalog["TOTAL"])
+    checks=["SUBTOTAL",  "TOTAL","store_name" ,"store_location", "TAX" , "CASH" , "CHANGE" , "VISA"]
     for name, price in product_catalog.items():
-        if name != "SUBTOTAL" and  name!= "location" and  name!="TOTAL" and name != "store_name":
-            db.add_item(purchase_id, name.lstrip(), name.lstrip(), price)
+        name.lstrip()
+        #if name not in checks:
+        if ("OTAL" not in name and name != "store_name" and name!= "store_location" and
+         "TAX" not in name and "CASH" not in name and "CHANGE" not in name and "VISA" not in name and "CARD" not in name):
+            #print(purchase_id, name.lstrip(), name.lstrip(), price)
+            db.add_item(purchase_id, str(name).lstrip(), str(name).lstrip(), price)
 
 
+#Inputs purchased data into database for all photos in directory
+def outputToSqldir(product_catalog, userID):
+
+    db.initialize_cursor()
+    print('HI')
+    store_id = db.check_store(str(product_catalog["store_name"]).lstrip(), product_catalog["store_location"], "")
+    print('HI')
+    purchase_id= db.add_receipt(userID, store_id, product_catalog["SUBTOTAL"], product_catalog["TOTAL"])
+    print('HI2')
+    checks=["SUBTOTAL",  "TOTAL","store_name" ,"store_location", "TAX" , "CASH" , "CHANGE" , "VISA"]
+    print('HI3')
+    for name, price in product_catalog.items():
+        name.lstrip()
+        #if name not in checks:
+        if ("OTAL" not in name and name != "store_name" and name!= "store_location" and "REFUND" not in name and
+         "TAX" not in name and "CASH" not in name and "CHANGE" not in name and "VISA" not in name and "CARD" not in name):
+            #print(purchase_id, name.lstrip(), name.lstrip(), price)
+            db.add_item(purchase_id, str(name).lstrip(), str(name).lstrip(), price)
+
+#prints the image with bounding boxes
 def printImage(image):
     d = pytesseract.image_to_data(image, output_type=Output.DICT)
     keys = list(d.keys())
@@ -149,6 +188,7 @@ def printImage(image):
 
 
 if __name__ == '__main__':
-    image2Text()
-    #directory2Text()
+    #image2Text()
+    # 
+    directory2Text()
 

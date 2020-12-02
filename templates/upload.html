@@ -5,15 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Optical Spending Recognition</title>
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/index.css') }}" rel="stylesheet" />
     <link href="{{ url_for('static', filename='css/form.css') }}" rel="stylesheet" />
     <link rel="stylesheet" href="./static/css/w3.css">
 </head>
 
 <body>
     <ul class="topnav">
-        <li><a class="active" href="./home">Home</a></li>
-        <li><a href="./upload">Upload</a></li>
+        <li><a href="./home">Home</a></li>
+        <li><a class="active" href="./upload">Upload</a></li>
         <li><a href="./budget">Budget</a></li>
         <li><a href="./receipt">Receipt</a></li>
         <li><a href="./items">Items</a></li>
@@ -22,17 +21,10 @@
         <li><a href="./stats">Stats</a></li>
     </ul>
 
-    <form id="item-form" method="post">
-      <label for="name">Search For Item:</label><br>
-      <input type="text" id="name" name="name" class="item-form-field" placeholder="Item Name" value="{{ request.form.name }}"><br>
-      <input type="submit" value="Search">
-    </form>
-
-    <ul id="myUL" class="stuff">
-        {% for item in data %}
-            <li id="test"> Receipt ID: {{ item[0] }}, Item ID: {{ item[5]}}, Name: {{ item[8] }}, Brand: {{ item[7] }}, Price: {{ item[9] }}</li>
-        {% endfor %}
-    </ul>
-
+    <form id="item-form" method="post" enctype="multipart/form-data">
+        <label for="file">Upload a picture of your receipt:</label><br><br>
+        <input type="file" id="file" name="file"><br><br>
+        <input type="submit" value="Upload Receipt">
+    </form> 
 </body>
 </html>

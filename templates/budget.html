@@ -6,11 +6,16 @@
     <title>Optical Spending Recognition</title>
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
     <link rel="stylesheet" href="./static/css/w3.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link href="{{ url_for('static', filename='css/form.css') }}" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
 
 <body>
     <ul class="topnav">
         <li><a href="./home">Home</a></li>
+        <li><a href="./upload">Upload</a></li>
         <li><a class="active" href="./budget">Budget</a></li>
         <li><a href="./receipt">Receipt</a></li>
         <li><a href="./items">Items</a></li>
@@ -18,6 +23,62 @@
         <li><a href="./update">Update</a></li>
         <li><a href="./stats">Stats</a></li>
     </ul>
-    <h1>Budget</h1>
+
+    <center>
+    {% block bud %}
+    <h1> Budget Total {{ bar[1] }} :</h1> <br>
+    {% endblock bud %}
+    </center>
+    
+    {% block code %}
+    <div class="container">
+        <div class="progress">
+            <div class="progress-bar bg-success" role="progressbar" style="width:{{ bar[2] }}%">
+                {{ bar[0] }}
+            </div>
+        </div>
+    </div>
+    {% endblock code %}
+
+    <form id="item-form" method="post">
+        <label for="budget">New Budget:</label><br>
+        <input type="text" id="budget" name="budget" class="item-form-field" value="{{ request.form.budget }}"><br>
+        <input type="submit" value="Update Budget">
+    </form>
+
+    <div class = "row">
+        <div class="column" id="piechart1"></div>
+        <div class="column" id="piechart2"></div>
+        <div class="column" id="piechart3"></div>
+    </div>
+
+    <script type="text/javascript" src="./static/js/loader.js"></script>
+    {% block javascript %}
+        <script type="text/javascript">
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+
+            function drawChart() {
+                var data1 = {{ data1|tojson }};
+                var data_store = google.visualization.arrayToDataTable(data1);
+                var options = {'title':'Spending by Store', 'width':650, 'height':650};
+                var chart1 = new google.visualization.PieChart(document.getElementById('piechart1'));
+                chart1.draw(data_store, options);
+
+                var data2 = {{ data2|tojson }};
+                var data_brand = google.visualization.arrayToDataTable(data2);
+                var options = {'title':'Spending by Brand', 'width':650, 'height':650};
+                var chart2 = new google.visualization.PieChart(document.getElementById('piechart2'));
+                chart2.draw(data_brand, options);
+
+                var data3 = {{ data3|tojson }};
+                var data_category = google.visualization.arrayToDataTable(data3);
+                var options = {'title':'Spending by Category', 'width':650, 'height':650};
+                var chart3 = new google.visualization.PieChart(document.getElementById('piechart3'));
+                chart3.draw(data_category, options);
+            }
+        </script>
+    {% endblock javascript %}
+
 </body>
 </html>

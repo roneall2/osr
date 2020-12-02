@@ -13,12 +13,14 @@
     <h1 id="login-header">Login</h1>
     
     <form id="login-form" method="post">
-      <label for="uname"><b>Username</b></label>
-      <input type="text" name="username" id="username-field" class="login-form-field" placeholder="Username" value="{{ request.form.username }}">
-      <label for="uname"><b>Password</b></label>
+      <label for="uname"><b>Username</b></label> <br>
+      <input type="text" name="username" id="username-field" class="login-form-field" placeholder="Username" value="{{ request.form.username }}"> <br>
+      <label for="uname"><b>Password</b></label> <br>
       <input type="password" name="password" id="password-field" class="login-form-field" placeholder="Password" value="{{
-        request.form.password }}">
-      <input type="submit" value="Login" id="login-form-submit">
+        request.form.password }}"> <br>
+      <input type="submit" value="Login" id="login-form-submit"> <br>
+      
+      <a href="./register"><button type="button" id="login-form-submit" href="./register">Register</button></a>
     </form>
 
     {% if error %}

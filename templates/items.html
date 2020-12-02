@@ -12,6 +12,7 @@
 <body>
     <ul class="topnav">
         <li><a href="./home">Home</a></li>
+        <li><a href="./upload">Upload</a></li>
         <li><a href="./budget">Budget</a></li>
         <li><a href="./receipt">Receipt</a></li>
         <li><a class="active" href="./items">Items</a></li>
@@ -26,9 +27,9 @@
         <label for="brand">Brand:</label><br>
         <input type="text" id="brand" name="brand" class="item-form-field" value="{{ request.form.brand }}"><br>
         <label for="name">Name:</label><br>
-        <input type="text" id="name" name="name" class="item-form-field" value="{{ request.form.name }}"><br><br>
+        <input type="text" id="name" name="name" class="item-form-field" value="{{ request.form.name }}"><br>
         <label for="price">Price:</label><br>
-        <input type="text" id="price" name="price" class="item-form-field" value="{{ request.form.price }}"><br><br>
+        <input type="text" id="price" name="price" class="item-form-field" value="{{ request.form.price }}"><br>
         <input type="submit" value="Add Item">
     </form> 
 </body>
