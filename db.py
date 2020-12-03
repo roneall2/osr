@@ -46,60 +46,60 @@ def initialize_cursor():
 #     create_tables()
 #     create_triggers()
 
-def initialize_with_dummy_values():
-    global mycursor, mydb, last_item, last_store, last_receipt
-    # initialize tables
-    initialize_cursor()    
+# def initialize_with_dummy_values():
+#     global mycursor, mydb, last_item, last_store, last_receipt
+#     # initialize tables
+#     initialize_cursor()    
     
-    # create tables
-    create_tables()
+#     # create tables
+#     create_tables()
 
-    # set up triggers
-    create_triggers()
+#     # set up triggers
+#     create_triggers()
 
-    # initialize demo user
-    sql = "INSERT INTO User(UserID, budget, name, password) VALUES (%s, %s, %s, %s)"
-    val = (0, 10000, "John Smith", "password")
-    mycursor.execute(sql, val)
+#     # initialize demo user
+#     sql = "INSERT INTO User(UserID, budget, name, password) VALUES (%s, %s, %s, %s)"
+#     val = (0, 10000, "John Smith", "password")
+#     mycursor.execute(sql, val)
 
-    # initialize demo store
-    sql = "INSERT INTO Store (StoreID, name, location, category) VALUES (%s, %s, %s, %s)"
-    val = (0, "Best Buy", "Champaign", "electronics")
-    mycursor.execute(sql, val)
+#     # initialize demo store
+#     sql = "INSERT INTO Store (StoreID, name, location, category) VALUES (%s, %s, %s, %s)"
+#     val = (0, "Best Buy", "Champaign", "electronics")
+#     mycursor.execute(sql, val)
 
-    # initialize demo store 2
-    sql = "INSERT INTO Store (StoreID, name, location, category) VALUES (%s, %s, %s, %s)"
-    val = (1, "Walmart", "Urbana", "electronics")
-    mycursor.execute(sql, val)
+#     # initialize demo store 2
+#     sql = "INSERT INTO Store (StoreID, name, location, category) VALUES (%s, %s, %s, %s)"
+#     val = (1, "Walmart", "Urbana", "electronics")
+#     mycursor.execute(sql, val)
 
-    # initialize demo receipt
-    sql = "INSERT INTO Receipt(PurchaseID, UserID, StoreID, subtotal, total) VALUES (%s, %s, %s, %s, %s)"
-    val = (0, 0, 0, 2300.00, 2530.00)
-    mycursor.execute(sql, val)
+#     # initialize demo receipt
+#     sql = "INSERT INTO Receipt(PurchaseID, UserID, StoreID, subtotal, total) VALUES (%s, %s, %s, %s, %s)"
+#     val = (0, 0, 0, 2300.00, 2530.00)
+#     mycursor.execute(sql, val)
 
-     # initialize demo receipt2
-    sql = "INSERT INTO Receipt(PurchaseID, UserID, StoreID, subtotal, total) VALUES (%s, %s, %s, %s, %s)"
-    val = (1, 0, 1, 1800.00, 1980.00)
-    mycursor.execute(sql, val)
+#      # initialize demo receipt2
+#     sql = "INSERT INTO Receipt(PurchaseID, UserID, StoreID, subtotal, total) VALUES (%s, %s, %s, %s, %s)"
+#     val = (1, 0, 1, 1800.00, 1980.00)
+#     mycursor.execute(sql, val)
 
-    # initialize demo items
-    sql = "INSERT INTO Item(ItemID, PurchaseID, brand, name, price) VALUES (%s, %s, %s, %s, %s)"
-    val = [
-        (0, 0, "Apple", "AirPods", 200.00),
-        (1, 0, "Nintendo", "Switch", 300.00),
-        (2, 0, "Apple", "iPhone", 1800.00),
-        (3, 1, "Apple", "iPhone", 1800.00)
-    ]
-    mycursor.executemany(sql, val)
-    last_user = 0
-    last_item = 0
-    last_receipt = 0
-    last_store = 0
-    last_item += 3
-    last_receipt += 1
-    last_store += 1
+#     # initialize demo items
+#     sql = "INSERT INTO Item(ItemID, PurchaseID, brand, name, price) VALUES (%s, %s, %s, %s, %s)"
+#     val = [
+#         (0, 0, "Apple", "AirPods", 200.00),
+#         (1, 0, "Nintendo", "Switch", 300.00),
+#         (2, 0, "Apple", "iPhone", 1800.00),
+#         (3, 1, "Apple", "iPhone", 1800.00)
+#     ]
+#     mycursor.executemany(sql, val)
+#     last_user = 0
+#     last_item = 0
+#     last_receipt = 0
+#     last_store = 0
+#     last_item += 3
+#     last_receipt += 1
+#     last_store += 1
 
-    mydb.commit()
+#     mydb.commit()
 
 # returns number of items in a receipt
 def items_per_receipt(user_id):
@@ -122,7 +122,7 @@ def get_items(user_id):
 # returns items matching name
 def find_items(user_id, item_name):
     global mycursor
-    mycursor.execute("SELECT * FROM Receipt LEFT OUTER JOIN Item ON Item.PurchaseID = Receipt.PurchaseID WHERE Receipt.UserID = %s AND Item.name = %s", (user_id, item_name))
+    mycursor.execute("SELECT * FROM Receipt LEFT OUTER JOIN Item ON Item.PurchaseID = Receipt.PurchaseID WHERE Receipt.UserID = %s AND Item.name LIKE %s", (user_id, '%' + item_name + '%'))
     return mycursor.fetchall()
     
 # adds a receipt to the database, returns its purchase id

@@ -39,10 +39,12 @@ def register_page():
 def home_page():
     global current_userid
     inputdata = db.get_items(current_userid)
+    print(inputdata)
     if request.method == 'POST':
         item_name = request.form['name']
         print(item_name)
         tempdata = db.find_items(current_userid, item_name)
+        print(tempdata)
         return render_template('index.html', data=tempdata)
     return render_template('index.html', data=inputdata)
 
@@ -68,10 +70,11 @@ def budget_page():
     budget = mongo.get_user_budget(current_userid)
     bar = [used, budget, (used/budget) * 100]
     print("Bar:", bar)
-
+    print([x for x in mongo.get_amount_spent(current_userid)])
     if request.method == 'POST':
         newbudget = request.form['budget']
         db.update_budget(current_userid, newbudget)
+        print([x for x in mongo.get_amount_spent(current_userid)])
         return redirect(url_for('budget_page'))
 
     # Spending by store
@@ -79,23 +82,18 @@ def budget_page():
     for i in mongo.get_store_spend(current_userid):
         newList = [i['store_name'], i['total_spent']]
         data1.append(newList)
-    print("Data1:", data1)
 
     # Spending by brand
     data2 = [["Brand", "Total"]]
-    print(print([x for x in mongo.get_amount_spent(current_userid)]))
-    print(print([x for x in mongo.get_brand_spend(current_userid)]))
     for i in mongo.get_brand_spend(current_userid):
         newList = [i['_id'], i['total_spent']]
         data2.append(newList)
-    print("Data2:", data2)
 
     # Spending by category
     data3 = [["Category", "Total"]]
     for i in mongo.get_category_spend(current_userid):
         newList = [i['_id'], i['total_spent']]
         data3.append(newList)
-    print("Data3:", data3)
     return render_template('budget.html', bar=bar, data1=data1, data2=data2, data3=data3)
 
 @app.route('/receipt', methods=['GET', 'POST'])

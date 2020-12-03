@@ -45,7 +45,7 @@ def get_category_spend(user_id):
     global myclient, mydb
     update_user(user_id)
     col = mydb[str(user_id)]
-    return col.aggregate([{'$group': {'_id': "$category", 'total_spent': {'$sum': '$price'}, 'avg_spend': {'$avg': '$price'}, 'biggest_spend': {'$max': "$price"}}}])
+    return  col.aggregate([{'$match': {'UserID': user_id}}, {'$group': {'_id': "$category", 'spend': {'$addToSet': '$total'}}}, {'$unwind': '$spend'}, {'$group': {'_id': '$_id', 'total_spent': {'$sum': '$spend'}, 'avg_spend': {'$avg': '$spend'}, 'biggest_spend': {'$max': "$spend"}}}])
 
 # Returns combined aggregate values across all recipts by brand
 def get_brand_spend(user_id):
@@ -59,7 +59,7 @@ def get_store_spend(user_id):
     global myclient, mydb
     update_user(user_id)
     col = mydb[str(user_id)]
-    m = col.aggregate([{'$group': {'_id': "$StoreID", 'total_spent': {'$sum': '$price'}, 'avg_spend': {'$avg': '$price'}, 'biggest_spend': {'$max': "$price"}}}])
+    m =  col.aggregate([{'$match': {'UserID': user_id}}, {'$group': {'_id': "$StoreID", 'spend': {'$addToSet': '$total'}}}, {'$unwind': '$spend'}, {'$group': {'_id': '$_id', 'total_spent': {'$sum': '$spend'}, 'avg_spend': {'$avg': '$spend'}, 'biggest_spend': {'$max': "$spend"}}}])
     return [dict({'store_name': db.get_store_name(x['_id'])}, **x) for x in m]
 
 # Returns combined aggregate values across all recipts 
@@ -67,7 +67,9 @@ def get_amount_spent(user_id):
     global myclient, mydb
     update_user(user_id)
     col = mydb[str(user_id)]
-    return col.aggregate([{'$group': {'_id': "$UserID", 'total_spent': {'$sum': '$price'}, 'avg_spend': {'$avg': '$price'}, 'biggest_spend': {'$max': "$price"}}}])
+    print(user_id)
+    # print([x for x in ])
+    return col.aggregate([{'$match': {'UserID': user_id}}, {'$group': {'_id': "$UserID", 'spend': {'$addToSet': '$total'}}}, {'$unwind': '$spend'}, {'$group': {'_id': '$_id', 'total_spent': {'$sum': '$spend'}, 'avg_spend': {'$avg': '$spend'}, 'biggest_spend': {'$max': "$spend"}}}])
 
 def get_user_budget(user_id):
     _, user_info = get_all_user_info(user_id)
@@ -83,7 +85,7 @@ def update_user(user_id):
         storeid, purchaseid, userid, subtotal, total, name, location, category, itemid, purchaseid, brand, itemname, itemprice = record
         # print(record)
         doc = {'UserID': userid, 'budget': budget, 'name': name, 'StoreID': storeid, 'PurchaseID': purchaseid, 'subtotal': subtotal, 'total': total, 'name': name, 'location': location, 'category': category, 'ItemID': itemid, 'brand': brand, 'item_name': itemname, 'price': itemprice}
-        col.update(doc, doc, upsert=True)
+        col.update({'UserID': userid, 'PurchaseID': purchaseid, 'ItemID': itemid}, doc, upsert=True)
     
 
 # Initializes the values for connecting to the Mongo Server

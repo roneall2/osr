@@ -110,19 +110,15 @@ def preProcess(image):
 #returns a dictionary with all the purchase items
 def image2Data(splitText, product_catalog):
     #Parsing Patterns
-    product_pattern=re.compile(r'([A-Z\s_.]+)[\d\s]+..?\s?\${0,1}(\d+\.\d{2})')
-    total_pattern=re.compile(r'(SUBTOTAL|TOTAL)([/s0-9])*', re.IGNORECASE)
-    store_pattern = re.compile(r'(WALMART|TARGET|COSTCO)', re.IGNORECASE)
-    address_pattern=re.compile(r'.+(\d{4}\s[A-Z-a-z]+)$', re.IGNORECASE)
+    product_pattern = re.compile(r'([A-Z\s_.]+)[\d]+.?\s?\${0,1}(\d+\.\d{2})')
+    total_pattern = re.compile(r'(SUBTOTAL|TOTAL)\${0,1}([\s0-9.]+)$', re.IGNORECASE)
+    store_pattern = re.compile(r'(WALMART|TARGET|COSTCO|mart|rget|BERGDORF GODDMAN)', re.IGNORECASE)
+    address_pattern=re.compile(r'^.{0,1}(\d{2,4}\s[A-Z-a-z\s]{2,})$', re.IGNORECASE)
 
 
     for line in splitText:
-        #Searches for Product Name and Price
-        if re.search(product_pattern, line):
-            product_line=product_pattern.search(line)
-            product_catalog[product_line.group(1)]=product_line.group(2)
         #Searches for Total and Subtotal
-        elif re.search(total_pattern, line):
+        if re.search(total_pattern, line):
             #print("subtotal and total",line)
             total_line = total_pattern.search(line)
             product_catalog[total_line.group(1)]=total_line.group(2)
@@ -130,12 +126,22 @@ def image2Data(splitText, product_catalog):
         elif re.search(store_pattern, line):
             #print("store name", line)
             store_line = store_pattern.search(line)
+            if "mart" in store_line.group(1) or "wal" in store_line.group(1):
+                product_catalog["store_name"] = "WALMART"
+                continue
+            if "co" in store_line.group(1) and "so" in store_line.group(1):
+                product_catalog["store_name"] = "COSTCO"
+                continue
             product_catalog["store_name"] = store_line.group(1)
         #Searches for Store Address
         elif re.search(address_pattern, line):
             #print("This should be an address:", line)
             address_line = address_pattern.search(line)
-            product_catalog["store_location"] = address_line.group(1)
+            product_catalog["store_location"] = line
+        #Searches for Product Name and Price
+        elif re.search(product_pattern, line):
+            product_line=product_pattern.search(line)
+            product_catalog[product_line.group(1)]=product_line.group(2)
     return product_catalog
 
 #Inputs purchased data into database for a SINGLE photo
@@ -156,19 +162,14 @@ def outputToSql(product_catalog, userID):
 def outputToSqldir(product_catalog, userID):
 
     db.initialize_cursor()
-    print('HI')
     store_id = db.check_store(str(product_catalog["store_name"]).lstrip(), product_catalog["store_location"], "")
-    print('HI')
     purchase_id= db.add_receipt(userID, store_id, product_catalog["SUBTOTAL"], product_catalog["TOTAL"])
-    print('HI2')
     checks=["SUBTOTAL",  "TOTAL","store_name" ,"store_location", "TAX" , "CASH" , "CHANGE" , "VISA"]
-    print('HI3')
     for name, price in product_catalog.items():
         name.lstrip()
         #if name not in checks:
         if ("OTAL" not in name and name != "store_name" and name!= "store_location" and "REFUND" not in name and
          "TAX" not in name and "CASH" not in name and "CHANGE" not in name and "VISA" not in name and "CARD" not in name):
-            #print(purchase_id, name.lstrip(), name.lstrip(), price)
             db.add_item(purchase_id, str(name).lstrip(), str(name).lstrip(), price)
 
 #prints the image with bounding boxes
@@ -185,6 +186,23 @@ def printImage(image):
 
     cv2.imshow('img', image)
     cv2.waitKey(0)
+
+def demo_setup():
+    image2Text("photos/costco2.jpg", 0)
+    image2Text("photos/costco3.jpg", 1)
+    image2Text("photos/costco4.jpg", 2)
+    image2Text("photos/realWalmart1.jpg", 3)
+    image2Text("photos/realWalmart2.jpg", 4)
+    image2Text("photos/realWalmart3.jpg", 5)
+    image2Text("photos/realWalmart4.jpg", 6)
+    image2Text("photos/target1.jpg", 7)
+    image2Text("photos/target3.jpg", 8)
+    image2Text("photos/target6.jpg", 9)
+    image2Text("photos/target7.jpg", 8)
+    image2Text("photos/target8.jpg", 4)
+    image2Text("photos/target9.jpg", 2)
+    image2Text("photos/target10.jpg", 1)
+    image2Text("photos/walmart_test.png", 6)
 
 
 if __name__ == '__main__':
